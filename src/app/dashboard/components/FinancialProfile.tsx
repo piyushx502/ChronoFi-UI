@@ -14,6 +14,61 @@ interface Profile {
   goals: { id: number; name: string; target_amount: number; target_years: number }[];
 }
 
+import InteractiveCat from "../../components/InteractiveCat";
+
+function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    setTimeout(() => {
+      onRetry();
+      setIsRetrying(false);
+    }, 600); // Small visual delay so the user sees the spin
+  };
+
+  return (
+    <motion.div 
+      key="error" 
+      exit={{ opacity: 0, scale: 0.95 }} 
+      transition={{ duration: 0.2 }} 
+      className="flex-1 border border-zinc-800/50 rounded-xl bg-zinc-900/20 p-8 flex flex-col items-center justify-center text-center backdrop-blur-sm z-10 relative"
+    >
+      <div className="relative w-full max-w-[250px] aspect-square mx-auto mb-2 select-none z-10">
+        <InteractiveCat />
+      </div>
+
+      <div className="text-center w-full px-2 -mt-12 relative z-20">
+        <h3 
+          className="text-zinc-100 font-black mb-1 text-lg tracking-tight font-sans"
+          style={{
+            textShadow: "1px 1px 0 #71717a, 2px 2px 0 #71717a, 3px 3px 0 #52525b, 4px 4px 0 #52525b, 5px 5px 15px rgba(0,0,0,0.9)"
+          }}
+        >
+          Connection Lost
+        </h3>
+        <p 
+          className="text-zinc-100 text-[10px] font-black tracking-widest uppercase leading-tight max-w-[180px] mx-auto mt-1"
+          style={{ textShadow: "1px 1px 0 #71717a, 2px 2px 0 #52525b, 3px 3px 10px rgba(0,0,0,0.8)" }}
+        >
+          {error || "Unable to establish connection to the data stream."}
+        </p>
+      </div>
+      
+      <motion.button 
+        onClick={handleRetry}
+        disabled={isRetrying}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="text-xs flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2.5 rounded-md transition-colors border border-zinc-700/50 shadow-sm font-medium mt-4 disabled:opacity-80"
+      >
+        <RefreshCw className={`w-3 h-3 ${isRetrying ? "animate-spin" : ""}`} />
+        {isRetrying ? "Retrying..." : "Retry"}
+      </motion.button>
+    </motion.div>
+  );
+}
+
 function AnimatedCounter({ value }: { value: number }) {
   const motionValue = useMotionValue(0);
   const springValue = useSpring(motionValue, { damping: 40, stiffness: 100 });
@@ -88,10 +143,7 @@ export default function FinancialProfile() {
           <RefreshCw className="w-5 h-5 text-zinc-500 animate-spin" />
         </motion.div>
       ) : error || !profile ? (
-        <motion.div key="error" exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.2 }} className="flex-1 border border-red-900/50 rounded-xl bg-red-950/10 p-6 flex flex-col items-center justify-center text-center">
-          <p className="text-red-400 text-sm mb-4">{error}</p>
-          <button onClick={fetchProfile} className="text-xs bg-red-900/50 hover:bg-red-900 text-white px-3 py-1.5 rounded transition-colors">Retry</button>
-        </motion.div>
+        <ErrorState error={error} onRetry={fetchProfile} />
       ) : (
         <motion.div 
           key="content"
