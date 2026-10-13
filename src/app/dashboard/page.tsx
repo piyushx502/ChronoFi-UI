@@ -2,58 +2,160 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { SlidersHorizontal, MessageSquare, LineChart as ChartIcon } from "lucide-react";
 import FinancialProfile from "./components/FinancialProfile";
 import AIChat from "./components/AIChat";
 import PredictiveChart from "./components/PredictiveChart";
+import ScenarioComparison, { ScenarioResultData } from "./components/ScenarioComparison";
 
 export default function DashboardPage() {
-  const [forecastData, setForecastData] = useState<unknown>(null);
+  const [simulationData, setSimulationData] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<"chat" | "scenario">("scenario");
+  const [isSimulating, setIsSimulating] = useState(false);
 
-  // This function is passed to the AIChat. When the AI finishes streaming its math calculation,
-  // it bubbles up the JSON data here to draw the Recharts graph.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleForecastUpdate = (data: any) => {
-    setForecastData(data);
+  // Bubbles up scenario results from SSE chat or direct tool invocation
+  const handleSimulationUpdate = (data: any) => {
+    setSimulationData(data);
+    if (data?.scenario_type) {
+      setActiveTab("scenario");
+    }
+  };
+
+  const handleRunScenario = async (params: {
+    principal: number;
+    rate: number;
+    tenure: number;
+    downPayment?: number;
+  }) => {
+    setIsSimulating(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/v1/financial-scenarios/simulate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          scenario_type: "vehicle_loan",
+          changes: {
+            loan_principal: params.principal,
+            annual_interest_rate: params.rate,
+            loan_tenure_months: params.tenure,
+            down_payment: params.downPayment || 0,
+          },
+          simulation_settings: {
+            num_simulations: 1000,
+            seed: 42,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setSimulationData(data);
+        setActiveTab("scenario");
+      }
+    } catch (err) {
+      console.error("Failed to run scenario:", err);
+    } finally {
+      setIsSimulating(false);
+    }
   };
 
   return (
     <div className="p-8 max-w-7xl mx-auto h-full flex flex-col gap-6">
-      <header className="mb-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-100">Command Center</h1>
-        <p className="text-sm text-zinc-400 mt-1">Real-time portfolio metrics and quantitative forecasting.</p>
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight text-zinc-100">
+            ChronoFi Life Financial Planner
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">
+            Institutional-grade What-If scenario simulation & quantitative retirement projections.
+          </p>
+        </div>
+
+        {/* Tab Controls */}
+        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1 self-start">
+          <button
+            onClick={() => setActiveTab("scenario")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === "scenario"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+            What-If Simulator
+          </button>
+          <button
+            onClick={() => setActiveTab("chat")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === "chat"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+            Quant Agent Chat
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-        
-        {/* Left Column: Financial Profile */}
+        {/* Left Column: Authorized User Financial Profile */}
         <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
           <FinancialProfile />
         </div>
 
-        {/* Right Column: Chart (Top) & AI Chat (Bottom) */}
+        {/* Right Column: Chart (Top) & Interactive Simulator / Chat (Bottom) */}
         <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
-          
-          <motion.div 
+          {/* Top Card: Multi-Scenario Trajectory Chart */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="h-72 shrink-0 border border-zinc-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm p-4 flex flex-col"
+            className="h-80 shrink-0 border border-zinc-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm p-4 flex flex-col"
           >
-            <h3 className="text-sm font-medium text-zinc-400 mb-4">LSTM Probabilistic Trajectory</h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <ChartIcon className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-sm font-medium text-zinc-300">
+                  {simulationData?.trajectory
+                    ? "Baseline vs What-If Scenario Trajectory (CRN Monte Carlo)"
+                    : "Probabilistic Portfolio Trajectory"}
+                </h3>
+              </div>
+              {simulationData?.impact && (
+                <span className="text-[11px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  Corpus Impact: -₹{(Math.abs(simulationData.impact.corpus_difference) / 100000).toFixed(1)}L
+                </span>
+              )}
+            </div>
             <div className="flex-1 min-h-0">
-              <PredictiveChart data={forecastData} />
+              <PredictiveChart data={simulationData} />
             </div>
           </motion.div>
 
-          <motion.div 
+          {/* Bottom Card: Switchable Scenario Comparison Panel OR AI Chat */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="flex-1 border border-zinc-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm overflow-hidden flex flex-col min-h-0"
           >
-            <AIChat onForecastUpdate={handleForecastUpdate} />
+            {activeTab === "scenario" ? (
+              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <ScenarioComparison
+                  scenarioData={simulationData}
+                  onRunScenario={handleRunScenario}
+                  isLoading={isSimulating}
+                />
+              </div>
+            ) : (
+              <AIChat onForecastUpdate={handleSimulationUpdate} />
+            )}
           </motion.div>
-
         </div>
       </div>
     </div>

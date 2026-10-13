@@ -55,19 +55,26 @@ export default function AIChat({ onForecastUpdate }: AIChatProps) {
           "Accept": "text/event-stream",
         },
         onmessage(ev) {
-          if (ev.event === "token") {
-            setMessages(prev => 
-              prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + ev.data } : m)
-            );
-          } else if (ev.event === "tool_call") {
-            // The AI decided to run the math model! 
-            // In a real app we might parse this, but our backend formats the token stream to include the result anyway.
-            // But if we want to extract the JSON for the chart:
-            try {
-              const data = JSON.parse(ev.data);
-              onForecastUpdate(data);
-            } catch {
-              // Ignore parse errors from raw text
+          if (!ev.data || ev.data === "[DONE]") return;
+          try {
+            const parsed = JSON.parse(ev.data);
+            if (parsed.type === "token" && parsed.content) {
+              setMessages(prev => 
+                prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + parsed.content } : m)
+              );
+            } else if (parsed.type === "scenario_result" && parsed.data) {
+              onForecastUpdate(parsed.data);
+            } else if (parsed.type === "error" && parsed.content) {
+              setMessages(prev => 
+                prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + `\n[Error: ${parsed.content}]` } : m)
+              );
+            }
+          } catch {
+            // Fallback for non-JSON tokens
+            if (ev.data) {
+              setMessages(prev => 
+                prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + ev.data } : m)
+              );
             }
           }
         },

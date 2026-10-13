@@ -34,3 +34,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# nested repos and tools
+chronofi-backend/
+chronofi-frontend/
+graphify-out/
