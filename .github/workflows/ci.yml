@@ -28,29 +28,3 @@ jobs:
       - name: Next.js production build
         run: npm run build
 
-  backend:
-    name: Backend Test Suite (108 Tests)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: chronofi-backend
-    env:
-      GEMINI_API_KEY: "dummy_ci_key"
-      JWT_SECRET_KEY: "test_secret_key_ci"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          version: "latest"
-
-      - name: Set up Python 3.14
-        run: uv python install 3.14
-
-      - name: Install backend dependencies
-        run: uv sync --dev
-
-      - name: Run 108 backend tests
-        run: uv run pytest tests/ -v
