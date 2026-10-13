@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LogOut, LayoutDashboard, LineChart, MessageSquare, Calculator } from "lucide-react";
+import { LogOut, LayoutDashboard, LineChart, MessageSquare, Calculator, SlidersHorizontal } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: 'Terminal', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Simulations', href: '/dashboard/simulations', icon: SlidersHorizontal },
   { name: 'Quant Models', href: '/dashboard/models', icon: LineChart },
   { name: 'AI Transcripts', href: '/dashboard/transcripts', icon: MessageSquare },
   { name: 'Tax Planner', href: '/dashboard/tax', icon: Calculator },

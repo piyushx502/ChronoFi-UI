@@ -10,17 +10,15 @@ import {
   CreditCard,
   Activity,
 } from "lucide-react";
+import Link from "next/link";
 import FinancialProfile from "./components/FinancialProfile";
 import AIChat from "./components/AIChat";
 import PredictiveChart from "./components/PredictiveChart";
 import ScenarioComparison, { ScenarioResultData } from "./components/ScenarioComparison";
-import StressTester from "./components/StressTester";
-import DebtPayoffOptimizer from "./components/DebtPayoffOptimizer";
-import FinancialHealthMonitor from "./components/FinancialHealthMonitor";
 
 export default function DashboardPage() {
   const [simulationData, setSimulationData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"chat" | "scenario" | "stress" | "debt" | "health">("scenario");
+  const [activeTab, setActiveTab] = useState<"chat" | "scenario">("chat");
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Bubbles up scenario results from SSE chat or direct tool invocation
@@ -78,70 +76,47 @@ export default function DashboardPage() {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-zinc-100">
-            ChronoFi Life Financial Planner
+            ChronoFi Copilot Terminal
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Institutional-grade What-If scenario simulation, stress testing & quantitative debt acceleration.
+            Autonomous multi-agent financial planning, persistent conversational memory & Monte Carlo forecasting.
           </p>
         </div>
 
-        {/* Tab Controls */}
-        <div className="flex flex-wrap bg-zinc-900 border border-zinc-800 rounded-lg p-1 self-start gap-1">
-          <button
-            onClick={() => setActiveTab("scenario")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === "scenario"
-                ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
+        {/* Clean Single-Row Controls */}
+        <div className="flex items-center gap-2 self-start">
+          <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1 shadow-sm">
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                activeTab === "chat"
+                  ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+              Quant Agent Chat
+            </button>
+            <button
+              onClick={() => setActiveTab("scenario")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+                activeTab === "scenario"
+                  ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+              What-If Simulator
+            </button>
+          </div>
+
+          <Link
+            href="/dashboard/simulations"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition shadow-sm"
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-            What-If Simulator
-          </button>
-          <button
-            onClick={() => setActiveTab("stress")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === "stress"
-                ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-            Stress Tester
-          </button>
-          <button
-            onClick={() => setActiveTab("debt")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === "debt"
-                ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
-            Debt Accelerator
-          </button>
-          <button
-            onClick={() => setActiveTab("health")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === "health"
-                ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5 text-teal-400" />
-            Health Score
-          </button>
-          <button
-            onClick={() => setActiveTab("chat")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
-              activeTab === "chat"
-                ? "bg-zinc-800 text-zinc-100 shadow-sm"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-            Quant Agent Chat
-          </button>
+            Simulation Studio ↗
+          </Link>
         </div>
       </header>
 
@@ -187,7 +162,7 @@ export default function DashboardPage() {
             transition={{ delay: 0.3 }}
             className="flex-1 border border-zinc-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm overflow-hidden flex flex-col min-h-0"
           >
-            {activeTab === "scenario" && (
+            {activeTab === "scenario" ? (
               <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
                 <ScenarioComparison
                   scenarioData={simulationData}
@@ -195,23 +170,7 @@ export default function DashboardPage() {
                   isLoading={isSimulating}
                 />
               </div>
-            )}
-            {activeTab === "stress" && (
-              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
-                <StressTester />
-              </div>
-            )}
-            {activeTab === "debt" && (
-              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
-                <DebtPayoffOptimizer />
-              </div>
-            )}
-            {activeTab === "health" && (
-              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
-                <FinancialHealthMonitor />
-              </div>
-            )}
-            {activeTab === "chat" && (
+            ) : (
               <AIChat onForecastUpdate={handleSimulationUpdate} />
             )}
           </motion.div>
