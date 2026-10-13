@@ -1,45 +1,59 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   ShieldAlert,
   Flame,
   AlertTriangle,
   CheckCircle2,
-  DollarSign,
-  TrendingDown,
   Layers,
   RefreshCw,
+  Wallet,
+  TrendingDown,
 } from "lucide-react";
 
-interface LiquidationStep {
-  asset_name: string;
-  asset_type: string;
-  tier: number;
+interface AssetTier {
+  tier_name: string;
+  asset_names: string[];
   initial_value: number;
-  liquidated_amount: number;
+  liquidated_value: number;
   remaining_value: number;
-  penalty_loss: number;
-  penalty_rate: number;
+  friction_cost: number;
+}
+
+interface MonthlyStressPoint {
+  month: number;
+  income: number;
+  expenses: number;
+  debt_service: number;
+  net_deficit: number;
+  remaining_total_wealth: number;
+  is_solvent: boolean;
 }
 
 interface StressTestResult {
-  scenario_type: string;
-  duration_months: number;
+  scenario_name: string;
+  shock_type: string;
+  shock_duration_months: number;
   monthly_burn_rate: number;
-  total_liquidity_required: number;
-  total_net_cash_raised: number;
-  total_haircuts_and_penalties: number;
-  solvent: boolean;
+  net_monthly_deficit: number;
+  total_shock_cost: number;
+  survival_runway_months: number;
+  is_solvent_through_shock: boolean;
   insolvency_month: number | null;
-  months_of_runway_remaining: number;
-  liquidation_waterfall: LiquidationStep[];
-  actionable_recommendations: string[];
+  total_wealth_before: number;
+  total_wealth_after: number;
+  total_friction_losses: number;
+  recommended_emergency_fund: number;
+  emergency_fund_gap: number;
+  resilience_rating: string;
+  asset_tiers: AssetTier[];
+  monthly_trajectory?: MonthlyStressPoint[];
+  actionable_advice: string[];
 }
 
 export default function StressTester() {
-  const [shockType, setShockType] = useState<"job_loss" | "salary_cut" | "lump_sum_emergency">("job_loss");
+  const [shockType, setShockType] = useState<"job_loss" | "income_reduction" | "medical_emergency">("job_loss");
   const [durationMonths, setDurationMonths] = useState<number>(6);
   const [salaryCutPct, setSalaryCutPct] = useState<number>(30);
   const [emergencyExpense, setEmergencyExpense] = useState<number>(300000);
@@ -52,30 +66,46 @@ export default function StressTester() {
     setError(null);
     try {
       const token = localStorage.getItem("token");
+      const payload = {
+        shock_type: shockType,
+        shock_duration_months: durationMonths,
+        income_reduction_pct: shockType === "job_loss" ? 100.0 : shockType === "income_reduction" ? salaryCutPct : 0.0,
+        lump_sum_cost: shockType === "medical_emergency" ? emergencyExpense : 0.0,
+      };
+
       const res = await fetch("/api/stress/simulate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          shock_type: shockType,
-          duration_months: durationMonths,
-          salary_cut_percentage: salaryCutPct,
-          lump_sum_emergency_expense: emergencyExpense,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        throw new Error(`Stress test failed with status ${res.status}`);
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || `Stress test failed with status ${res.status}`);
       }
 
-      const data = await res.json();
+      const data: StressTestResult = await res.json();
       setResult(data);
     } catch (err: any) {
       setError(err.message || "Failed to execute stress test.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getResilienceBadge = (rating?: string) => {
+    switch (rating?.toLowerCase()) {
+      case "robust":
+        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+      case "adequate":
+        return "text-blue-400 bg-blue-500/10 border-blue-500/30";
+      case "vulnerable":
+        return "text-amber-400 bg-amber-500/10 border-amber-500/30";
+      default:
+        return "text-rose-400 bg-rose-500/10 border-rose-500/30";
     }
   };
 
@@ -105,8 +135,8 @@ export default function StressTester() {
             className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-rose-500"
           >
             <option value="job_loss">Complete Job Loss (Zero Income)</option>
-            <option value="salary_cut">Prolonged Salary Cut</option>
-            <option value="lump_sum_emergency">Medical / Lump-Sum Shock</option>
+            <option value="income_reduction">Prolonged Salary Cut</option>
+            <option value="medical_emergency">Medical / Lump-Sum Shock</option>
           </select>
         </div>
 
@@ -125,7 +155,7 @@ export default function StressTester() {
           </div>
         )}
 
-        {shockType === "salary_cut" && (
+        {shockType === "income_reduction" && (
           <>
             <div className="flex flex-col gap-1.5">
               <label className="text-zinc-400 font-medium">Salary Reduction: {salaryCutPct}%</label>
@@ -153,7 +183,7 @@ export default function StressTester() {
           </>
         )}
 
-        {shockType === "lump_sum_emergency" && (
+        {shockType === "medical_emergency" && (
           <div className="flex flex-col gap-1.5">
             <label className="text-zinc-400 font-medium">Emergency Cost: ₹{(emergencyExpense / 100000).toFixed(1)}L</label>
             <input
@@ -205,102 +235,120 @@ export default function StressTester() {
             <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Solvency Status</span>
               <div className="flex items-center gap-1.5 mt-0.5">
-                {result.solvent ? (
+                {result.is_solvent_through_shock ? (
                   <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Solvent & Safe
                   </span>
                 ) : (
                   <span className="text-xs font-semibold text-rose-400 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5" /> Insolvent at Month {result.insolvency_month}
+                    <AlertTriangle className="w-3.5 h-3.5" /> Insolvent at Month {result.insolvency_month ?? "Shock Peak"}
                   </span>
                 )}
               </div>
             </div>
 
             <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
-              <span className="text-[11px] text-zinc-400">Runway Remaining</span>
-              <span className="text-base font-semibold font-mono text-zinc-100">
-                {result.months_of_runway_remaining} Mo
-              </span>
+              <span className="text-[11px] text-zinc-400">Survival Runway</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-semibold font-mono text-zinc-100">
+                  {result.survival_runway_months} Mo
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded border font-medium ${getResilienceBadge(result.resilience_rating)}`}>
+                  {result.resilience_rating}
+                </span>
+              </div>
             </div>
 
             <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Monthly Burn Rate</span>
               <span className="text-base font-semibold font-mono text-rose-400">
-                ₹{Math.round(result.monthly_burn_rate).toLocaleString("en-IN")}
+                ₹{Math.round(result.monthly_burn_rate || 0).toLocaleString("en-IN")}
               </span>
             </div>
 
             <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Exit Frictions & Penalties</span>
               <span className="text-base font-semibold font-mono text-amber-400">
-                ₹{Math.round(result.total_haircuts_and_penalties).toLocaleString("en-IN")}
+                ₹{Math.round(result.total_friction_losses || 0).toLocaleString("en-IN")}
               </span>
             </div>
           </div>
 
           {/* Liquidation Waterfall Breakdown */}
-          <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-3">
-            <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-              <Layers className="w-4 h-4 text-blue-400" />
-              <h3 className="text-xs font-semibold text-zinc-200">
-                Priority Liquidation Waterfall (Tiers 1–4)
-              </h3>
-            </div>
+          {result.asset_tiers && result.asset_tiers.length > 0 && (
+            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-3">
+              <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+                <Layers className="w-4 h-4 text-blue-400" />
+                <h3 className="text-xs font-semibold text-zinc-200">
+                  Priority Liquidation Waterfall (Tiers 1–4)
+                </h3>
+              </div>
 
-            <div className="flex flex-col gap-2">
-              {result.liquidation_waterfall.map((step, idx) => (
-                <div
-                  key={idx}
-                  className="bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-300">
-                      T{step.tier}
-                    </span>
-                    <div>
-                      <span className="font-medium text-zinc-200">{step.asset_name}</span>
-                      <span className="text-[11px] text-zinc-400 ml-2 font-mono">
-                        ({step.asset_type.toUpperCase()})
+              <div className="flex flex-col gap-2">
+                {result.asset_tiers.map((tier, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-300">
+                        {idx + 1}
                       </span>
+                      <div>
+                        <span className="font-medium text-zinc-200">{tier.tier_name}</span>
+                        {tier.asset_names && tier.asset_names.length > 0 && (
+                          <span className="text-[11px] text-zinc-400 ml-2 font-mono">
+                            ({tier.asset_names.join(", ")})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-right">
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block">Initial Value</span>
+                        <span className="font-mono text-zinc-300 font-medium">
+                          ₹{Math.round(tier.initial_value || 0).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block">Liquidated</span>
+                        <span className="font-mono text-rose-300 font-semibold">
+                          ₹{Math.round(tier.liquidated_value || 0).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block">Friction Cost</span>
+                        <span className="font-mono text-amber-400">
+                          {tier.friction_cost > 0
+                            ? `-₹${Math.round(tier.friction_cost).toLocaleString("en-IN")}`
+                            : "₹0"}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-zinc-400 block">Remaining</span>
+                        <span className="font-mono text-emerald-400 font-semibold">
+                          ₹{Math.round(tier.remaining_value || 0).toLocaleString("en-IN")}
+                        </span>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4 text-right">
-                    <div>
-                      <span className="text-[10px] text-zinc-400 block">Liquidated</span>
-                      <span className="font-mono text-zinc-200 font-semibold">
-                        ₹{Math.round(step.liquidated_amount).toLocaleString("en-IN")}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-zinc-400 block">Friction Cost</span>
-                      <span className="font-mono text-rose-400">
-                        {step.penalty_loss > 0 ? `-₹${Math.round(step.penalty_loss).toLocaleString("en-IN")}` : "₹0"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] text-zinc-400 block">Remaining</span>
-                      <span className="font-mono text-emerald-400">
-                        ₹{Math.round(step.remaining_value).toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Actionable Recommendations */}
-          {result.actionable_recommendations.length > 0 && (
+          {result.actionable_advice && result.actionable_advice.length > 0 && (
             <div className="bg-amber-950/20 border border-amber-800/40 rounded-xl p-3.5 flex flex-col gap-2">
               <span className="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
                 <ShieldAlert className="w-3.5 h-3.5" /> Recovery Strategy & Takeaways
               </span>
               <ul className="list-disc list-inside text-xs text-amber-200/90 space-y-1">
-                {result.actionable_recommendations.map((rec, i) => (
+                {result.actionable_advice.map((rec, i) => (
                   <li key={i}>{rec}</li>
                 ))}
               </ul>
