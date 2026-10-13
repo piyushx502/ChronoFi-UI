@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LogOut, LayoutDashboard, LineChart, MessageSquare, Calculator, SlidersHorizontal } from "lucide-react";
+import { LogOut, LayoutDashboard, LineChart, MessageSquare, Calculator, SlidersHorizontal, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   { name: 'Terminal', href: '/dashboard', icon: LayoutDashboard },
@@ -29,6 +29,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   if (!mounted) return null; // Prevent hydration errors
+
+  const [bgMode, setBgMode] = useState<"default" | "minimal">("default");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("chronofi_bg_mode");
+    if (stored === "minimal") setBgMode("minimal");
+  }, []);
+
+  const toggleBackground = () => {
+    const next = bgMode === "default" ? "minimal" : "default";
+    setBgMode(next);
+    localStorage.setItem("chronofi_bg_mode", next);
+    window.dispatchEvent(new CustomEvent("chronofi_bg_toggle", { detail: next }));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -71,12 +85,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        <div className="p-4 border-t border-zinc-800/50">
+        <div className="p-4 border-t border-zinc-800/50 flex flex-col gap-1.5">
+          <button 
+            onClick={toggleBackground}
+            className="group flex items-center justify-between w-full px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 rounded-lg transition-colors"
+            title="Switch between Original Currency Flow (Default) and Minimal Mesh"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-zinc-400 group-hover:text-amber-400 transition-colors" />
+              <span>Background</span>
+            </span>
+            <span className="font-mono text-[10px] text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+              {bgMode === "default" ? "Original" : "Minimal"}
+            </span>
+          </button>
+
           <button 
             onClick={handleLogout}
-            className="group flex items-center w-full px-3 py-2.5 text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
+            className="group flex items-center w-full px-3 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 rounded-lg transition-colors outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
           >
-            <LogOut className="w-[18px] h-[18px] mr-3 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
+            <LogOut className="w-3.5 h-3.5 mr-2 text-zinc-500 group-hover:text-zinc-400 transition-colors" />
             Disconnect
           </button>
         </div>
