@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [bgMode, setBgMode] = useState<"default" | "minimal">("default");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -27,10 +28,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setMounted(true);
     }
   }, [router]);
-
-  if (!mounted) return null; // Prevent hydration errors
-
-  const [bgMode, setBgMode] = useState<"default" | "minimal">("default");
 
   useEffect(() => {
     const stored = localStorage.getItem("chronofi_bg_mode");
@@ -43,6 +40,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     localStorage.setItem("chronofi_bg_mode", next);
     window.dispatchEvent(new CustomEvent("chronofi_bg_toggle", { detail: next }));
   };
+
+  if (!mounted) return null; // Prevent hydration errors
 
   const handleLogout = () => {
     localStorage.removeItem("token");
