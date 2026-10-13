@@ -2,15 +2,25 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, MessageSquare, LineChart as ChartIcon } from "lucide-react";
+import {
+  SlidersHorizontal,
+  MessageSquare,
+  LineChart as ChartIcon,
+  ShieldAlert,
+  CreditCard,
+  Activity,
+} from "lucide-react";
 import FinancialProfile from "./components/FinancialProfile";
 import AIChat from "./components/AIChat";
 import PredictiveChart from "./components/PredictiveChart";
 import ScenarioComparison, { ScenarioResultData } from "./components/ScenarioComparison";
+import StressTester from "./components/StressTester";
+import DebtPayoffOptimizer from "./components/DebtPayoffOptimizer";
+import FinancialHealthMonitor from "./components/FinancialHealthMonitor";
 
 export default function DashboardPage() {
   const [simulationData, setSimulationData] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"chat" | "scenario">("scenario");
+  const [activeTab, setActiveTab] = useState<"chat" | "scenario" | "stress" | "debt" | "health">("scenario");
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Bubbles up scenario results from SSE chat or direct tool invocation
@@ -71,12 +81,12 @@ export default function DashboardPage() {
             ChronoFi Life Financial Planner
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Institutional-grade What-If scenario simulation & quantitative retirement projections.
+            Institutional-grade What-If scenario simulation, stress testing & quantitative debt acceleration.
           </p>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1 self-start">
+        <div className="flex flex-wrap bg-zinc-900 border border-zinc-800 rounded-lg p-1 self-start gap-1">
           <button
             onClick={() => setActiveTab("scenario")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
@@ -87,6 +97,39 @@ export default function DashboardPage() {
           >
             <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
             What-If Simulator
+          </button>
+          <button
+            onClick={() => setActiveTab("stress")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === "stress"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+            Stress Tester
+          </button>
+          <button
+            onClick={() => setActiveTab("debt")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === "debt"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
+            Debt Accelerator
+          </button>
+          <button
+            onClick={() => setActiveTab("health")}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+              activeTab === "health"
+                ? "bg-zinc-800 text-zinc-100 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5 text-teal-400" />
+            Health Score
           </button>
           <button
             onClick={() => setActiveTab("chat")}
@@ -108,7 +151,7 @@ export default function DashboardPage() {
           <FinancialProfile />
         </div>
 
-        {/* Right Column: Chart (Top) & Interactive Simulator / Chat (Bottom) */}
+        {/* Right Column: Chart (Top) & Interactive Simulator / Chat / Engines (Bottom) */}
         <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
           {/* Top Card: Multi-Scenario Trajectory Chart */}
           <motion.div
@@ -137,14 +180,14 @@ export default function DashboardPage() {
             </div>
           </motion.div>
 
-          {/* Bottom Card: Switchable Scenario Comparison Panel OR AI Chat */}
+          {/* Bottom Card: Switchable Feature Panels */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="flex-1 border border-zinc-800 rounded-xl bg-zinc-950/50 backdrop-blur-sm overflow-hidden flex flex-col min-h-0"
           >
-            {activeTab === "scenario" ? (
+            {activeTab === "scenario" && (
               <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
                 <ScenarioComparison
                   scenarioData={simulationData}
@@ -152,7 +195,23 @@ export default function DashboardPage() {
                   isLoading={isSimulating}
                 />
               </div>
-            ) : (
+            )}
+            {activeTab === "stress" && (
+              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <StressTester />
+              </div>
+            )}
+            {activeTab === "debt" && (
+              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <DebtPayoffOptimizer />
+              </div>
+            )}
+            {activeTab === "health" && (
+              <div className="p-4 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <FinancialHealthMonitor />
+              </div>
+            )}
+            {activeTab === "chat" && (
               <AIChat onForecastUpdate={handleSimulationUpdate} />
             )}
           </motion.div>
