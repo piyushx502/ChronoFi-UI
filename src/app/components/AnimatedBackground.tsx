@@ -89,9 +89,9 @@ export default function AnimatedBackground() {
 
   const layers = useMemo(() => {
     return [
-      { id: 0, url: generateLayerSvg(12345, 16, 0), speed: 180, direction: -1 }, // 16x16 = 256 symbols
-      { id: 1, url: generateLayerSvg(67890, 13, 1), speed: 120, direction: 1 },  // 13x13 = 169 symbols
-      { id: 2, url: generateLayerSvg(54321, 9, 2), speed: 90, direction: -1 },   // 9x9 = 81 symbols
+      { id: 0, url: generateLayerSvg(12345, 13, 0), speed: 420, direction: -1 }, // 13x13 = 169 symbols (ultra-slow 7 min drift)
+      { id: 1, url: generateLayerSvg(67890, 10, 1), speed: 300, direction: 1 },  // 10x10 = 100 symbols (5 min drift)
+      { id: 2, url: generateLayerSvg(54321, 7, 2), speed: 220, direction: -1 },   // 7x7 = 49 symbols (3.6 min drift)
     ];
   }, []);
 

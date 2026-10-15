@@ -13,6 +13,7 @@ import FinancialProfile from "./components/FinancialProfile";
 import AIChat from "./components/AIChat";
 import PredictiveChart from "./components/PredictiveChart";
 import ScenarioComparison, { ScenarioResultData } from "./components/ScenarioComparison";
+import { TerminalModeDispatcherCard } from "./components/AutonomousModeRadar";
 
 export default function DashboardPage() {
   const [simulationData, setSimulationData] = useState<any>(null);
@@ -120,8 +121,9 @@ export default function DashboardPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-        {/* Left Column: Authorized User Financial Profile */}
+        {/* Left Column: Autonomous Mode Dispatcher & Financial Profile */}
         <div className="lg:col-span-4 flex flex-col gap-6 min-h-0">
+          <TerminalModeDispatcherCard />
           <FinancialProfile />
         </div>
 

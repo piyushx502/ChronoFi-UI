@@ -17,7 +17,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const rawUsername = username.trim();
+      const rawUsername = username.trim().toLowerCase();
       const email = rawUsername.includes("@") ? rawUsername : `${rawUsername}@chronofi.demo`;
       
       const formData = new URLSearchParams();
@@ -30,22 +30,33 @@ export default function LoginPage() {
         body: formData.toString(),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error(data.detail || "Invalid email or password");
       }
 
-      const data = await res.json();
+      if (!data.access_token) {
+        throw new Error("Missing authentication token from server response");
+      }
       
       // Store token securely
       localStorage.setItem("token", data.access_token);
+      localStorage.setItem("username", rawUsername);
       
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Redirect cleanly to dashboard
+      window.location.href = "/dashboard";
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to login");
     } finally {
       setLoading(false);
     }
+  };
+
+  const autofillDemo = (demoUser: "arjun" | "priya") => {
+    setUsername(demoUser);
+    setPassword("password123");
+    setError("");
   };
 
   return (
@@ -113,9 +124,24 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-8 pt-6 border-t border-zinc-800 text-center">
-          <p className="text-xs text-zinc-500">
-            Demo Accounts: <span className="text-zinc-300 font-medium">arjun</span> / <span className="text-zinc-300 font-medium">priya</span> (pw: <span className="text-zinc-300 font-medium">password123</span>)
-          </p>
+          <p className="text-xs text-zinc-500 mb-2">Click to quick-fill demo account:</p>
+          <div className="flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => autofillDemo("arjun")}
+              className="px-2.5 py-1 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 rounded-md transition-colors"
+            >
+              arjun (Aggressive, 25y)
+            </button>
+            <button
+              type="button"
+              onClick={() => autofillDemo("priya")}
+              className="px-2.5 py-1 text-xs bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/60 rounded-md transition-colors"
+            >
+              priya (Moderate, 35y)
+            </button>
+          </div>
+          <p className="text-[11px] text-zinc-500 mt-2 font-mono">pw: password123</p>
         </div>
       </motion.div>
     </div>

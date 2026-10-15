@@ -23,6 +23,16 @@ export default function SimulationsStudioPage() {
   const [simulationData, setSimulationData] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab") as SimulationTab;
+      if (tabParam && ["scenario", "stress", "debt", "health"].includes(tabParam)) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
   const handleRunScenario = async (params: {
     principal: number;
     rate: number;
