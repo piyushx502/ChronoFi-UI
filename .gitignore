@@ -39,3 +39,7 @@ next-env.d.ts
 chronofi-backend/
 chronofi-frontend/
 graphify-out/
+
+# test results
+test-results/
+

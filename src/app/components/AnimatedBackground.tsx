@@ -72,9 +72,19 @@ function generateLayerSvg(seed: number, gridSize: number, layerIndex: number) {
 
 export default function AnimatedBackground() {
   const [mounted, setMounted] = useState(false);
+  const [bgMode, setBgMode] = useState<"default" | "minimal">("default");
   
   useEffect(() => {
     setMounted(true);
+    const stored = localStorage.getItem("chronofi_bg_mode");
+    if (stored === "minimal") {
+      setBgMode("minimal");
+    }
+    const handleToggle = (e: any) => {
+      setBgMode(e.detail || "default");
+    };
+    window.addEventListener("chronofi_bg_toggle", handleToggle);
+    return () => window.removeEventListener("chronofi_bg_toggle", handleToggle);
   }, []);
 
   const layers = useMemo(() => {
@@ -87,8 +97,16 @@ export default function AnimatedBackground() {
 
   if (!mounted) return null;
 
+  // Alternative minimal background state
+  if (bgMode === "minimal") {
+    return (
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
+    );
+  }
+
+  // Default state: 100% original animated floating currency symbol layers
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-zinc-950">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-zinc-950">
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes flowDiag0 { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-${SVG_SIZE}px, -${SVG_SIZE}px, 0); } }
         @keyframes flowDiag1 { from { transform: translate3d(-${SVG_SIZE}px, 0, 0); } to { transform: translate3d(0, -${SVG_SIZE}px, 0); } }

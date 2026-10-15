@@ -4,20 +4,22 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Wallet, CreditCard, Target, RefreshCw, Plus, Trash2, Edit3, Check, X, ShieldAlert, ArrowUpRight } from "lucide-react";
 import InteractiveCat from "../../components/InteractiveCat";
+import { useCurrency } from "@/app/context/CurrencyContext";
 
 interface Profile {
   id: number;
   name: string;
   email: string;
   age: number;
+  currency?: string;
   base_salary: number;
   monthly_expenses: number;
   net_worth: number;
   monthly_investable_surplus: number;
   months_of_runway: number;
-  assets: { id: number; name: string; current_value: number; asset_type: string; expected_return_rate?: number }[];
-  liabilities: { id: number; name: string; principal_remaining: number; interest_rate: number; monthly_payment: number }[];
-  goals: { id: number; name: string; target_amount: number; target_years: number; priority?: string }[];
+  assets: { id: number; name: string; current_value: number; asset_type: string; expected_return_rate?: number; currency?: string }[];
+  liabilities: { id: number; name: string; principal_remaining: number; interest_rate: number; monthly_payment: number; currency?: string }[];
+  goals: { id: number; name: string; target_amount: number; target_years: number; priority?: string; currency?: string }[];
 }
 
 function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
@@ -73,17 +75,28 @@ function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) 
   );
 }
 
-function AnimatedCounter({ value }: { value: number }) {
+function AnimatedCounter({ value, currency = 'INR' }: { value: number; currency?: string }) {
+  const { convert, displayCurrency, displayCurrencyInfo } = useCurrency();
   const motionValue = useMotionValue(0);
   const springValue = useSpring(motionValue, { damping: 40, stiffness: 100 });
   
-  useEffect(() => {
-    motionValue.set(value || 0);
-  }, [motionValue, value]);
+  const { convertedAmount } = convert(value || 0, currency, displayCurrency);
 
-  const display = useTransform(springValue, (latest) => 
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(latest)
-  );
+  useEffect(() => {
+    motionValue.set(convertedAmount);
+  }, [motionValue, convertedAmount]);
+
+  const display = useTransform(springValue, (latest) => {
+    try {
+      return new Intl.NumberFormat(displayCurrencyInfo.locale, {
+        style: 'currency',
+        currency: displayCurrency,
+        maximumFractionDigits: displayCurrencyInfo.minor_units,
+      }).format(latest);
+    } catch {
+      return `${displayCurrencyInfo.symbol}${Math.round(latest).toLocaleString()}`;
+    }
+  });
 
   return <motion.span>{display}</motion.span>;
 }
@@ -116,11 +129,19 @@ export default function FinancialProfile() {
   const [goalYears, setGoalYears] = useState("5");
   const [goalPriority, setGoalPriority] = useState("Essential");
 
+  const getAuthToken = () => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("token") || new URLSearchParams(window.location.search).get("token");
+  };
+
   const fetchProfile = async () => {
     setLoading(true);
     setError("");
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
       const res = await fetch("/api/profile/me", {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -149,7 +170,7 @@ export default function FinancialProfile() {
   const handleSaveCashflow = async () => {
     setIsSavingCashflow(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch("/api/profile/me", {
         method: "PUT",
         headers: {
@@ -176,7 +197,7 @@ export default function FinancialProfile() {
   const handleAddAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch("/api/profile/assets", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -200,7 +221,7 @@ export default function FinancialProfile() {
 
   const handleDeleteAsset = async (id: number) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch(`/api/profile/assets/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
@@ -214,7 +235,7 @@ export default function FinancialProfile() {
   const handleAddLiability = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch("/api/profile/liabilities", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -239,7 +260,7 @@ export default function FinancialProfile() {
 
   const handleDeleteLiability = async (id: number) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch(`/api/profile/liabilities/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
@@ -253,7 +274,7 @@ export default function FinancialProfile() {
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch("/api/profile/goals", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -278,7 +299,7 @@ export default function FinancialProfile() {
 
   const handleDeleteGoal = async (id: number) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const res = await fetch(`/api/profile/goals/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
@@ -289,8 +310,10 @@ export default function FinancialProfile() {
     }
   };
 
-  const formatCurrency = (val: number) => 
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
+  const { formatMoney, displayCurrency } = useCurrency();
+
+  const formatCurrency = (val: number, cur?: string) => 
+    formatMoney(val, cur || 'INR');
 
   const container = {
     hidden: { opacity: 0 },
@@ -327,12 +350,25 @@ export default function FinancialProfile() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h2 className="text-base font-semibold text-zinc-100">{profile.name}</h2>
-                <p className="text-xs text-zinc-500">{profile.email} • Age {profile.age}</p>
+                <div className="flex items-center gap-1.5 text-xs text-zinc-500 mt-0.5">
+                  <span className="font-mono text-zinc-400">{profile.email}</span>
+                  <div
+                    className="relative group/term-tick cursor-pointer inline-flex items-center justify-center shrink-0"
+                  >
+                    <Check className="w-3 h-3 text-zinc-400 group-hover/term-tick:text-zinc-100 transition-colors" />
+                    <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover/term-tick:flex flex-col items-center z-30">
+                      <div className="px-1.5 py-0.5 text-[9px] font-sans font-medium text-zinc-100 bg-zinc-800 border border-zinc-700 rounded shadow-md whitespace-nowrap">
+                        Email verified
+                      </div>
+                    </div>
+                  </div>
+                  <span>• Age {profile.age}</span>
+                </div>
               </div>
               <div className="text-right">
-                <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium">Net Worth</p>
-                <p className="text-sm font-semibold text-emerald-400 font-mono">
-                  <AnimatedCounter value={profile.net_worth} />
+                <p className="text-[11px] uppercase tracking-wider text-zinc-500 font-medium font-mono">Net Worth</p>
+                <p className="text-base font-bold text-zinc-100 font-mono">
+                  <AnimatedCounter value={profile.net_worth} currency="INR" />
                 </p>
               </div>
             </div>
@@ -344,12 +380,13 @@ export default function FinancialProfile() {
                 {isEditingCashflow ? (
                   <div className="flex items-center gap-1.5">
                     <input 
-                      type="number"
+                      type="number" 
+                      min="0"
                       value={editExpenses}
                       onChange={(e) => setEditExpenses(e.target.value)}
-                      className="w-24 bg-zinc-800 border border-zinc-700 rounded px-1.5 py-0.5 text-xs text-zinc-100 font-mono"
+                      className="w-24 bg-zinc-950/80 border border-zinc-800 rounded px-2 py-0.5 text-xs text-zinc-100 font-mono focus:outline-none focus:ring-1 focus:ring-zinc-500"
                     />
-                    <button onClick={handleSaveCashflow} disabled={isSavingCashflow} className="p-1 text-emerald-400 hover:text-emerald-300">
+                    <button onClick={handleSaveCashflow} disabled={isSavingCashflow} className="p-1 text-zinc-200 hover:text-white">
                       <Check className="w-3.5 h-3.5" />
                     </button>
                     <button onClick={() => setIsEditingCashflow(false)} className="p-1 text-zinc-500 hover:text-zinc-300">
@@ -358,7 +395,7 @@ export default function FinancialProfile() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-zinc-200">
+                    <span className="font-mono text-zinc-100 font-semibold">
                       {profile.monthly_expenses > 0 ? formatCurrency(profile.monthly_expenses) : "Unset (est. 40%)"}
                     </span>
                     <button onClick={() => setIsEditingCashflow(true)} className="p-1 text-zinc-500 hover:text-zinc-300">
@@ -370,20 +407,14 @@ export default function FinancialProfile() {
 
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-400">Investable Surplus:</span>
-                <span className="font-mono font-medium text-amber-300">
+                <span className="font-mono font-bold text-zinc-100">
                   {formatCurrency(profile.monthly_investable_surplus)}/mo
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-xs">
                 <span className="text-zinc-400">Emergency Runway:</span>
-                <span className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
-                  profile.months_of_runway >= 6
-                    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
-                    : profile.months_of_runway >= 3
-                    ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
-                    : "text-rose-400 bg-rose-500/10 border-rose-500/20"
-                }`}>
+                <span className="font-mono text-[11px] px-2 py-0.5 rounded border text-zinc-200 bg-zinc-800 border-zinc-700 font-medium">
                   {profile.months_of_runway} Months
                 </span>
               </div>
@@ -393,15 +424,15 @@ export default function FinancialProfile() {
           {/* Assets Section */}
           <motion.div variants={item} className="p-4 border border-zinc-800 rounded-xl bg-zinc-900/30">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center text-emerald-400">
-                <Wallet className="w-4 h-4 mr-2" />
-                <h3 className="text-sm font-medium">Assets</h3>
+              <div className="flex items-center text-zinc-200">
+                <Wallet className="w-4 h-4 mr-2 text-zinc-400" />
+                <h3 className="text-sm font-bold tracking-tight">Assets</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">{formatCurrency(totalAssets)}</span>
+                <span className="text-xs font-mono text-zinc-100 font-bold">{formatCurrency(totalAssets)}</span>
                 <button 
                   onClick={() => setActiveModal("asset")}
-                  className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition"
+                  className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition border border-zinc-700/60"
                   title="Add Asset"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -410,28 +441,29 @@ export default function FinancialProfile() {
             </div>
 
             {activeModal === "asset" && (
-              <form onSubmit={handleAddAsset} className="mb-3 p-2.5 rounded bg-zinc-950 border border-zinc-800 space-y-2 text-xs">
+              <form onSubmit={handleAddAsset} className="mb-3 p-3 rounded-lg bg-zinc-950/90 border border-zinc-800/80 space-y-2.5 text-xs shadow-inner">
                 <input 
                   type="text" 
                   placeholder="Asset Name (e.g. Mutual Funds)" 
                   value={assetName} 
                   onChange={e => setAssetName(e.target.value)} 
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100" 
+                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                   required 
                 />
                 <div className="flex gap-2">
                   <input 
                     type="number" 
-                    placeholder="Value (₹)" 
+                    min="0"
+                    placeholder={`Value (${profile?.currency || '₹'})`} 
                     value={assetValue} 
                     onChange={e => setAssetValue(e.target.value)} 
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 font-mono" 
+                    className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                     required 
                   />
                   <select 
                     value={assetType} 
                     onChange={e => setAssetType(e.target.value)} 
-                    className="bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100"
+                    className="bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors"
                   >
                     <option value="Equity">Equity</option>
                     <option value="Cash">Cash / FD</option>
@@ -439,9 +471,9 @@ export default function FinancialProfile() {
                     <option value="Gold">Gold</option>
                   </select>
                 </div>
-                <div className="flex justify-end gap-1.5 pt-1">
-                  <button type="button" onClick={() => setActiveModal(null)} className="px-2 py-1 rounded bg-zinc-800 text-zinc-400">Cancel</button>
-                  <button type="submit" className="px-2 py-1 rounded bg-emerald-600 text-white">Save</button>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="px-2.5 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs transition-colors border border-zinc-700/50">Cancel</button>
+                  <button type="submit" className="px-3 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-900 font-medium text-xs transition-colors shadow-sm">Save Asset</button>
                 </div>
               </form>
             )}
@@ -471,15 +503,15 @@ export default function FinancialProfile() {
           {/* Liabilities Section */}
           <motion.div variants={item} className="p-4 border border-zinc-800 rounded-xl bg-zinc-900/30">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center text-rose-400">
-                <CreditCard className="w-4 h-4 mr-2" />
-                <h3 className="text-sm font-medium">Liabilities</h3>
+              <div className="flex items-center text-zinc-200">
+                <CreditCard className="w-4 h-4 mr-2 text-zinc-400" />
+                <h3 className="text-sm font-bold tracking-tight">Liabilities</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">{formatCurrency(totalLiabilities)}</span>
+                <span className="text-xs font-mono text-zinc-100 font-bold">{formatCurrency(totalLiabilities)}</span>
                 <button 
                   onClick={() => setActiveModal("liability")}
-                  className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition"
+                  className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition border border-zinc-700/60"
                   title="Add Liability"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -488,36 +520,38 @@ export default function FinancialProfile() {
             </div>
 
             {activeModal === "liability" && (
-              <form onSubmit={handleAddLiability} className="mb-3 p-2.5 rounded bg-zinc-950 border border-zinc-800 space-y-2 text-xs">
+              <form onSubmit={handleAddLiability} className="mb-3 p-3 rounded-lg bg-zinc-950/90 border border-zinc-800/80 space-y-2.5 text-xs shadow-inner">
                 <input 
                   type="text" 
                   placeholder="Loan Name (e.g. Car Loan)" 
                   value={liabName} 
                   onChange={e => setLiabName(e.target.value)} 
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100" 
+                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                   required 
                 />
                 <div className="flex gap-2">
                   <input 
                     type="number" 
-                    placeholder="Principal (₹)" 
+                    min="0"
+                    placeholder={`Principal (${profile?.currency || '₹'})`} 
                     value={liabPrincipal} 
                     onChange={e => setLiabPrincipal(e.target.value)} 
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 font-mono" 
+                    className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                     required 
                   />
                   <input 
                     type="number" 
-                    placeholder="EMI (₹)" 
+                    min="0"
+                    placeholder={`EMI (${profile?.currency || '₹'})`} 
                     value={liabEMI} 
                     onChange={e => setLiabEMI(e.target.value)} 
-                    className="w-24 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 font-mono" 
+                    className="w-24 bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                     required 
                   />
                 </div>
-                <div className="flex justify-end gap-1.5 pt-1">
-                  <button type="button" onClick={() => setActiveModal(null)} className="px-2 py-1 rounded bg-zinc-800 text-zinc-400">Cancel</button>
-                  <button type="submit" className="px-2 py-1 rounded bg-rose-600 text-white">Save</button>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="px-2.5 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs transition-colors border border-zinc-700/50">Cancel</button>
+                  <button type="submit" className="px-3 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-900 font-medium text-xs transition-colors shadow-sm">Save Liability</button>
                 </div>
               </form>
             )}
@@ -526,14 +560,14 @@ export default function FinancialProfile() {
               {profile.liabilities.map(l => (
                 <div key={l.id} className="flex justify-between items-center group py-1 text-xs">
                   <div>
-                    <p className="text-zinc-200">{l.name}</p>
-                    <p className="text-[10px] text-zinc-500">{(l.interest_rate * 100).toFixed(1)}% APR • ₹{l.monthly_payment?.toLocaleString('en-IN') || 0}/mo</p>
+                    <p className="font-semibold text-zinc-200">{l.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono">{(l.interest_rate * 100).toFixed(1)}% APR • {formatCurrency(l.monthly_payment || 0, l.currency || profile.currency)}/mo</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-zinc-300 font-mono">{formatCurrency(l.principal_remaining)}</p>
+                    <p className="text-zinc-100 font-mono font-bold">{formatCurrency(l.principal_remaining)}</p>
                     <button 
                       onClick={() => handleDeleteLiability(l.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-rose-400 transition"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 transition"
                       title="Delete Liability"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -547,13 +581,13 @@ export default function FinancialProfile() {
           {/* Goals Section */}
           <motion.div variants={item} className="p-4 border border-zinc-800 rounded-xl bg-zinc-900/30">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center text-blue-400">
-                <Target className="w-4 h-4 mr-2" />
-                <h3 className="text-sm font-medium">Life Goals</h3>
+              <div className="flex items-center text-zinc-200">
+                <Target className="w-4 h-4 mr-2 text-zinc-400" />
+                <h3 className="text-sm font-bold tracking-tight">Life Goals</h3>
               </div>
               <button 
                 onClick={() => setActiveModal("goal")}
-                className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition"
+                className="p-1 rounded bg-zinc-800 text-zinc-300 hover:text-white transition border border-zinc-700/60"
                 title="Add Goal"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -561,36 +595,38 @@ export default function FinancialProfile() {
             </div>
 
             {activeModal === "goal" && (
-              <form onSubmit={handleAddGoal} className="mb-3 p-2.5 rounded bg-zinc-950 border border-zinc-800 space-y-2 text-xs">
+              <form onSubmit={handleAddGoal} className="mb-3 p-3 rounded-lg bg-zinc-950/90 border border-zinc-800/80 space-y-2.5 text-xs shadow-inner">
                 <input 
                   type="text" 
                   placeholder="Goal Name (e.g. Child Education)" 
                   value={goalName} 
                   onChange={e => setGoalName(e.target.value)} 
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100" 
+                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                   required 
                 />
                 <div className="flex gap-2">
                   <input 
                     type="number" 
-                    placeholder="Target (₹)" 
+                    min="0"
+                    placeholder={`Target (${profile?.currency || '₹'})`} 
                     value={goalAmount} 
                     onChange={e => setGoalAmount(e.target.value)} 
-                    className="flex-1 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100 font-mono" 
+                    className="flex-1 bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                     required 
                   />
                   <input 
                     type="number" 
+                    min="1"
                     placeholder="Years" 
                     value={goalYears} 
                     onChange={e => setGoalYears(e.target.value)} 
-                    className="w-20 bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-zinc-100" 
+                    className="w-20 bg-zinc-950/80 border border-zinc-800 rounded-md px-2.5 py-1.5 text-zinc-100 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-zinc-500 placeholder:text-zinc-600 transition-colors" 
                     required 
                   />
                 </div>
-                <div className="flex justify-end gap-1.5 pt-1">
-                  <button type="button" onClick={() => setActiveModal(null)} className="px-2 py-1 rounded bg-zinc-800 text-zinc-400">Cancel</button>
-                  <button type="submit" className="px-2 py-1 rounded bg-blue-600 text-white">Save</button>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button type="button" onClick={() => setActiveModal(null)} className="px-2.5 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs transition-colors border border-zinc-700/50">Cancel</button>
+                  <button type="submit" className="px-3 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-900 font-medium text-xs transition-colors shadow-sm">Save Goal</button>
                 </div>
               </form>
             )}
@@ -599,14 +635,14 @@ export default function FinancialProfile() {
               {profile.goals.map(g => (
                 <div key={g.id} className="flex justify-between items-center group p-2 rounded bg-zinc-950/40 border border-zinc-800/40 text-xs">
                   <div>
-                    <p className="font-medium text-zinc-200">{g.name}</p>
-                    <p className="text-[10px] text-zinc-500">Target: {g.target_years} Yrs • {g.priority || 'Essential'}</p>
+                    <p className="font-semibold text-zinc-200">{g.name}</p>
+                    <p className="text-[10px] text-zinc-500 font-mono">Target: {g.target_years} Yrs • {g.priority || 'Essential'}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <p className="text-blue-400 font-mono font-medium">{formatCurrency(g.target_amount)}</p>
+                    <p className="text-zinc-100 font-mono font-bold">{formatCurrency(g.target_amount)}</p>
                     <button 
                       onClick={() => handleDeleteGoal(g.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-rose-400 transition"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 transition"
                       title="Delete Goal"
                     >
                       <Trash2 className="w-3 h-3" />

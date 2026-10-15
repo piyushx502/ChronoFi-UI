@@ -85,6 +85,27 @@ export interface ScenarioResultData {
     target_corpus: number;
   }[];
   warnings: string[];
+  goal_impacts?: {
+    goal_id?: number | null;
+    name: string;
+    priority: string;
+    target_amount: number;
+    target_years: number;
+    inflated_target: number;
+    monthly_sip_required: number;
+    baseline_monthly_allocated: number;
+    baseline_projected_corpus: number;
+    baseline_funding_ratio: number;
+    baseline_status: string;
+    modified_monthly_allocated: number;
+    modified_projected_corpus: number;
+    modified_funding_ratio: number;
+    modified_status: string;
+    monthly_allocation_change: number;
+    corpus_shortfall: number;
+    projected_delay_months: number;
+    trade_off_note: string;
+  }[];
   engine_version: string;
 }
 
@@ -407,6 +428,79 @@ export default function ScenarioComparison({
           </div>
           <div className="text-zinc-400 font-mono text-[11px]">
             Total Payment: {formatCurrency(loan_metrics.total_payment)}
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Goal Life Impact Waterfall */}
+      {scenarioData.goal_impacts && scenarioData.goal_impacts.length > 0 && (
+        <div className="bg-zinc-900/60 border border-zinc-800 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              <h4 className="text-xs font-semibold text-zinc-200">
+                Multi-Goal Conflict & Waterfall Analysis
+              </h4>
+            </div>
+            <span className="text-[10px] text-zinc-500">
+              Deterministic Priority Allocation
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {scenarioData.goal_impacts.map((g, idx) => {
+              const isOnTrack = g.modified_status === "On Track";
+              const isAtRisk = g.modified_status === "At Risk";
+              const statusColor = isOnTrack
+                ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                : isAtRisk
+                ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
+                : "text-rose-400 bg-rose-500/10 border-rose-500/20";
+              const priorityColor =
+                g.priority === "Essential"
+                  ? "text-blue-400 border-blue-500/30 bg-blue-500/10"
+                  : g.priority === "Important"
+                  ? "text-purple-400 border-purple-500/30 bg-purple-500/10"
+                  : "text-amber-400 border-amber-500/30 bg-amber-500/10";
+
+              return (
+                <div
+                  key={idx}
+                  className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-800/80 hover:border-zinc-700/80 transition flex flex-col md:flex-row md:items-center justify-between gap-2"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium text-zinc-200">{g.name}</span>
+                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${priorityColor}`}>
+                        {g.priority}
+                      </span>
+                      <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${statusColor}`}>
+                        {g.modified_status} ({g.modified_funding_ratio}%)
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400 leading-snug">
+                      {g.trade_off_note}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-[10px] font-mono text-zinc-400 border-t md:border-t-0 md:border-l border-zinc-800/60 pt-1.5 md:pt-0 md:pl-3 shrink-0">
+                    <div>
+                      <span className="text-zinc-500">Monthly SIP: </span>
+                      <span className="text-zinc-200">₹{Math.round(g.modified_monthly_allocated).toLocaleString()}</span>
+                      {g.monthly_allocation_change < 0 && (
+                        <span className="text-rose-400 text-[9px] ml-1">
+                          ({Math.round(g.monthly_allocation_change).toLocaleString()})
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-zinc-500">Target: </span>
+                      <span className="text-zinc-200">₹{(g.target_amount / 100000).toFixed(1)}L</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
