@@ -9,7 +9,6 @@ import {
   Layers,
   RefreshCw,
   Wallet,
-  TrendingDown,
 } from "lucide-react";
 
 interface AssetTier {
@@ -112,27 +111,27 @@ export default function StressTester() {
   return (
     <div className="flex flex-col h-full gap-4 text-zinc-100 overflow-y-auto pr-1">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-rose-400" />
           <h2 className="text-base font-semibold text-zinc-100">
             Emergency Runway & Liquidity Shock Stress Tester
           </h2>
         </div>
-        <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+        <span className="text-[11px] font-mono text-rose-300 bg-rose-950/40 px-2 py-0.5 rounded border border-rose-800/50">
           4-Tier Liquidation Waterfall
         </span>
       </div>
 
       {/* Controls & Shock Parameters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/50 backdrop-blur-sm p-3.5 rounded-xl border border-zinc-800/60 text-xs">
         {/* Shock Type */}
         <div className="flex flex-col gap-1.5">
           <label className="text-zinc-400 font-medium">Shock Scenario</label>
           <select
             value={shockType}
             onChange={(e) => setShockType(e.target.value as any)}
-            className="bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-rose-500"
+            className="bg-zinc-900/80 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 transition"
           >
             <option value="job_loss">Complete Job Loss (Zero Income)</option>
             <option value="income_reduction">Prolonged Salary Cut</option>
@@ -203,7 +202,7 @@ export default function StressTester() {
           <button
             onClick={handleRunStressTest}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-medium py-2 px-3 rounded-lg text-xs transition shadow-sm"
+            className="w-full flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-500 active:scale-[0.99] disabled:opacity-50 text-white font-medium py-2 px-3 rounded-lg text-xs transition-all shadow-sm shadow-rose-950/40"
           >
             {isLoading ? (
               <>
@@ -232,7 +231,7 @@ export default function StressTester() {
         <div className="flex flex-col gap-4">
           {/* Top KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Solvency Status</span>
               <div className="flex items-center gap-1.5 mt-0.5">
                 {result.is_solvent_through_shock ? (
@@ -247,7 +246,7 @@ export default function StressTester() {
               </div>
             </div>
 
-            <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Survival Runway</span>
               <div className="flex items-baseline gap-2">
                 <span className="text-base font-semibold font-mono text-zinc-100">
@@ -259,14 +258,14 @@ export default function StressTester() {
               </div>
             </div>
 
-            <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Monthly Burn Rate</span>
               <span className="text-base font-semibold font-mono text-rose-400">
                 ₹{Math.round(result.monthly_burn_rate || 0).toLocaleString("en-IN")}
               </span>
             </div>
 
-            <div className="bg-zinc-900/60 border border-zinc-800 p-3 rounded-xl flex flex-col gap-1">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 p-3 rounded-xl flex flex-col gap-1">
               <span className="text-[11px] text-zinc-400">Exit Frictions & Penalties</span>
               <span className="text-base font-semibold font-mono text-amber-400">
                 ₹{Math.round(result.total_friction_losses || 0).toLocaleString("en-IN")}
@@ -276,8 +275,8 @@ export default function StressTester() {
 
           {/* Liquidation Waterfall Breakdown */}
           {result.asset_tiers && result.asset_tiers.length > 0 && (
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-3">
-              <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-xl p-3.5 flex flex-col gap-3">
+              <div className="flex items-center gap-2 border-b border-zinc-800/60 pb-2">
                 <Layers className="w-4 h-4 text-blue-400" />
                 <h3 className="text-xs font-semibold text-zinc-200">
                   Priority Liquidation Waterfall (Tiers 1–4)
@@ -288,7 +287,7 @@ export default function StressTester() {
                 {result.asset_tiers.map((tier, idx) => (
                   <div
                     key={idx}
-                    className="bg-zinc-950/80 border border-zinc-800/80 rounded-lg p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs"
+                    className="bg-zinc-900/50 border border-zinc-800/60 rounded-lg p-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs hover:border-zinc-700/60 transition-colors"
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-300">

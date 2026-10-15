@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, } from "lucide-react";
+import { Send, Bot } from "lucide-react";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -169,13 +169,13 @@ export default function AIChat({ onForecastUpdate }: AIChatProps) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="E.g. Can I afford a 50 Lakh car in 5 years if I save 20k a month?"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-4 pr-12 py-3 text-sm text-zinc-100 focus:outline-none focus:border-zinc-500 transition-colors placeholder:text-zinc-600"
+            className="w-full bg-zinc-900/80 border border-zinc-800 rounded-lg pl-4 pr-12 py-3 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-zinc-500 transition-colors placeholder:text-zinc-600"
             disabled={isStreaming}
           />
           <button
             type="submit"
             disabled={!input.trim() || isStreaming}
-            className="absolute right-2 p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute right-2 p-1.5 bg-zinc-100 hover:bg-white text-zinc-900 rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
             <Send className="w-4 h-4" />
           </button>

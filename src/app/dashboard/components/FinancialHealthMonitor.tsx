@@ -5,9 +5,6 @@ import {
   Activity,
   ShieldCheck,
   TrendingUp,
-  AlertCircle,
-  CheckCircle2,
-  AlertTriangle,
   RefreshCw,
   Compass,
 } from "lucide-react";
@@ -85,7 +82,7 @@ export default function FinancialHealthMonitor() {
   return (
     <div className="flex flex-col h-full gap-4 text-zinc-100 overflow-y-auto pr-1">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-teal-400" />
           <h2 className="text-base font-semibold text-zinc-100">
@@ -95,7 +92,7 @@ export default function FinancialHealthMonitor() {
         <button
           onClick={fetchHealthScore}
           disabled={isLoading}
-          className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 transition"
+          className="flex items-center gap-1 text-[11px] font-mono text-zinc-400 hover:text-teal-300 transition-colors"
         >
           <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
@@ -118,7 +115,7 @@ export default function FinancialHealthMonitor() {
       {data && !isLoading && (
         <div className="flex flex-col gap-4">
           {/* Top Score Banner */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 p-4 rounded-xl items-center">
             {/* Big Score */}
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full border-2 border-teal-500/60 bg-teal-950/30 flex items-center justify-center flex-col shrink-0">
@@ -136,7 +133,7 @@ export default function FinancialHealthMonitor() {
             </div>
 
             {/* Variance Tracking */}
-            <div className="md:col-span-2 border-t md:border-t-0 md:border-l border-zinc-800 pt-3 md:pt-0 md:pl-4">
+            <div className="md:col-span-2 border-t md:border-t-0 md:border-l border-zinc-800/60 pt-3 md:pt-0 md:pl-4">
               <span className="text-[11px] text-zinc-400 flex items-center gap-1">
                 <Compass className="w-3.5 h-3.5 text-zinc-400" /> Milestone Tracking
               </span>
@@ -153,7 +150,7 @@ export default function FinancialHealthMonitor() {
             {data.breakdown.map((item, idx) => (
               <div
                 key={idx}
-                className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between gap-2.5"
+                className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-xl p-3.5 flex flex-col justify-between gap-2.5 hover:border-zinc-700/60 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-zinc-200">{item.category}</span>
@@ -189,7 +186,7 @@ export default function FinancialHealthMonitor() {
 
           {/* Actionable Priorities */}
           {data.actionable_priorities.length > 0 && (
-            <div className="bg-teal-950/20 border border-teal-800/40 rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="bg-teal-950/20 backdrop-blur-sm border border-teal-800/40 rounded-xl p-3.5 flex flex-col gap-2">
               <span className="text-xs font-semibold text-teal-300 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" /> High-Priority Action Items
               </span>

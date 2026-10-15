@@ -8,7 +8,6 @@ import {
   CreditCard,
   Activity,
   LineChart as ChartIcon,
-  Sparkles,
 } from "lucide-react";
 import FinancialProfile from "../components/FinancialProfile";
 import PredictiveChart from "../components/PredictiveChart";
@@ -75,7 +74,7 @@ export default function SimulationsStudioPage() {
             <h1 className="text-3xl font-semibold tracking-tight text-zinc-100">
               Simulation Studio
             </h1>
-            <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            <span className="text-[11px] font-mono text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
               Quantitative Engines
             </span>
           </div>
@@ -94,7 +93,7 @@ export default function SimulationsStudioPage() {
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+            <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" />
             What-If Simulator
           </button>
           <button

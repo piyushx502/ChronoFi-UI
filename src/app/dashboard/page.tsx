@@ -6,9 +6,7 @@ import {
   SlidersHorizontal,
   MessageSquare,
   LineChart as ChartIcon,
-  ShieldAlert,
-  CreditCard,
-  Activity,
+  ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
 import FinancialProfile from "./components/FinancialProfile";
@@ -105,17 +103,18 @@ export default function DashboardPage() {
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400" />
               What-If Simulator
             </button>
           </div>
 
           <Link
             href="/dashboard/simulations"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 active:scale-[0.99] transition-all shadow-sm group"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-amber-400" />
-            Simulation Studio ↗
+            <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+            <span>Simulation Studio</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
           </Link>
         </div>
       </header>

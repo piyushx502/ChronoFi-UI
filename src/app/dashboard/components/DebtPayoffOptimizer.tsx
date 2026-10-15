@@ -5,7 +5,6 @@ import {
   CreditCard,
   Zap,
   TrendingUp,
-  DollarSign,
   Calendar,
   Sparkles,
   RefreshCw,
@@ -83,7 +82,7 @@ export default function DebtPayoffOptimizer() {
   return (
     <div className="flex flex-col h-full gap-4 text-zinc-100 overflow-y-auto pr-1">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
         <div className="flex items-center gap-2">
           <CreditCard className="w-5 h-5 text-indigo-400" />
           <h2 className="text-base font-semibold text-zinc-100">
@@ -96,7 +95,7 @@ export default function DebtPayoffOptimizer() {
       </div>
 
       {/* Prepayment Sliders */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-900/60 p-3.5 rounded-xl border border-zinc-800 text-xs">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/50 backdrop-blur-sm p-3.5 rounded-xl border border-zinc-800/60 text-xs">
         <div className="flex flex-col gap-1.5">
           <label className="text-zinc-400 font-medium">
             Extra Monthly Prepayment: ₹{extraPrepayment.toLocaleString("en-IN")}
@@ -131,7 +130,7 @@ export default function DebtPayoffOptimizer() {
           <button
             onClick={handleRunOptimization}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium py-2 px-3 rounded-lg text-xs transition shadow-sm"
+            className="w-full flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] disabled:opacity-50 text-white font-medium py-2 px-3 rounded-lg text-xs transition-all shadow-sm shadow-indigo-950/40"
           >
             {isLoading ? (
               <>
@@ -159,7 +158,7 @@ export default function DebtPayoffOptimizer() {
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Baseline Card */}
-            <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3.5 flex flex-col gap-2">
+            <div className="bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-xl p-3.5 flex flex-col gap-2">
               <span className="text-xs font-semibold text-zinc-400">Baseline Plan</span>
               <span className="text-[11px] text-zinc-500">Minimum monthly payments only</span>
               <div className="mt-2 space-y-1.5 text-xs">
@@ -181,8 +180,8 @@ export default function DebtPayoffOptimizer() {
             {/* Avalanche Card */}
             <div className={`rounded-xl p-3.5 flex flex-col gap-2 border ${
               result.recommended_strategy.includes("Avalanche")
-                ? "bg-indigo-950/40 border-indigo-500/60 ring-1 ring-indigo-500/30"
-                : "bg-zinc-900/60 border-zinc-800"
+                ? "bg-indigo-950/40 backdrop-blur-sm border-indigo-500/60 ring-1 ring-indigo-500/30"
+                : "bg-zinc-950/50 backdrop-blur-sm border-zinc-800/60"
             }`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-indigo-300 flex items-center gap-1">
@@ -220,8 +219,8 @@ export default function DebtPayoffOptimizer() {
             {/* Snowball Card */}
             <div className={`rounded-xl p-3.5 flex flex-col gap-2 border ${
               result.recommended_strategy.includes("Snowball")
-                ? "bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30"
-                : "bg-zinc-900/60 border-zinc-800"
+                ? "bg-blue-950/40 backdrop-blur-sm border-blue-500/60 ring-1 ring-blue-500/30"
+                : "bg-zinc-950/50 backdrop-blur-sm border-zinc-800/60"
             }`}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-blue-300 flex items-center gap-1">

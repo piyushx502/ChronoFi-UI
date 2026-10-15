@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LineChart, Cpu, ShieldCheck, Zap, GitBranch, Binary, Layers } from "lucide-react";
+import { Zap, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 const MODELS = [
@@ -55,10 +55,11 @@ export default function ModelsPage() {
 
         <Link
           href="/dashboard/simulations"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition shadow-sm self-start"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 active:scale-[0.99] transition-all shadow-sm self-start group"
         >
-          <Zap className="w-3.5 h-3.5 text-amber-400" />
-          Launch Simulation Studio ↗
+          <Zap className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+          <span>Launch Simulation Studio</span>
+          <ArrowUpRight className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
         </Link>
       </header>
 

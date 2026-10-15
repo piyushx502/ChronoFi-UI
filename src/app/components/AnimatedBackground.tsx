@@ -100,13 +100,13 @@ export default function AnimatedBackground() {
   // Alternative minimal background state
   if (bgMode === "minimal") {
     return (
-      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-zinc-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]" />
     );
   }
 
   // Default state: 100% original animated floating currency symbol layers
   return (
-    <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none bg-zinc-950">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-zinc-950">
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes flowDiag0 { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-${SVG_SIZE}px, -${SVG_SIZE}px, 0); } }
         @keyframes flowDiag1 { from { transform: translate3d(-${SVG_SIZE}px, 0, 0); } to { transform: translate3d(0, -${SVG_SIZE}px, 0); } }

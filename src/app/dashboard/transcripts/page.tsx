@@ -12,9 +12,7 @@ import {
   MessageSquare,
   ShieldCheck,
   Search,
-  ExternalLink,
   FileCheck,
-  Sparkles,
 } from "lucide-react";
 
 interface DocumentItem {
