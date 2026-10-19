@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (!authHeader.includes("demo-jwt-token")) {
     try {
       const backendController = new AbortController();
-      const timeoutId = setTimeout(() => backendController.abort(), 300);
+      const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
       const backendRes = await fetch("http://127.0.0.1:8000/api/profile/me", {
         headers: { Authorization: authHeader },
@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest) {
     if (!authHeader.includes("demo-jwt-token")) {
       try {
         const backendController = new AbortController();
-        const timeoutId = setTimeout(() => backendController.abort(), 300);
+        const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
         const backendRes = await fetch("http://127.0.0.1:8000/api/profile/me", {
           method: "PUT",

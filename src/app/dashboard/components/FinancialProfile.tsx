@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Wallet, CreditCard, Target, RefreshCw, Plus, Trash2, Edit3, Check, X, ShieldAlert, ArrowUpRight } from "lucide-react";
 import InteractiveCat from "../../components/InteractiveCat";
@@ -129,12 +129,12 @@ export default function FinancialProfile() {
   const [goalYears, setGoalYears] = useState("5");
   const [goalPriority, setGoalPriority] = useState("Essential");
 
-  const getAuthToken = () => {
+  const getAuthToken = useCallback(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("token") || new URLSearchParams(window.location.search).get("token");
-  };
+  }, []);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -161,11 +161,11 @@ export default function FinancialProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getAuthToken]);
 
   useEffect(() => {
     fetchProfile();
-  }, []);
+  }, [fetchProfile]);
 
   const handleSaveCashflow = async () => {
     setIsSavingCashflow(true);

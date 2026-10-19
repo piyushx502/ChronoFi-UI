@@ -20,7 +20,7 @@ export async function DELETE(
       const backendRes = await fetch(`http://127.0.0.1:8000/api/profile/goals/${goalId}`, {
         method: "DELETE",
         headers: { Authorization: authHeader },
-        signal: AbortSignal.timeout(300),
+        signal: AbortSignal.timeout(3000),
       });
       if (backendRes.ok) {
         return NextResponse.json(await backendRes.json());

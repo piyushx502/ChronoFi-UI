@@ -187,7 +187,10 @@ export async function POST(req: NextRequest) {
         id: l.id,
         name: l.name,
         principal: Number(l.principal_remaining) || 0,
-        annualRate: Number(l.interest_rate) || 0.09,
+        annualRate: (() => {
+          const r = Number(l.interest_rate) || 0.09;
+          return r > 1 ? r / 100 : r;
+        })(),
         monthlyPayment: Number(l.monthly_payment) || (Number(l.principal_remaining) * 0.02),
       }));
 

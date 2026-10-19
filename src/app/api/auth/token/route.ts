@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     // 2. If non-demo credentials, attempt forwarding to backend on port 8000
     try {
       const backendController = new AbortController();
-      const timeoutId = setTimeout(() => backendController.abort(), 300);
+      const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
       const backendRes = await fetch("http://127.0.0.1:8000/api/auth/token", {
         method: "POST",

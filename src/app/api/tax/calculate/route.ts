@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     try {
       const authHeader = req.headers.get("authorization") || "";
       const backendController = new AbortController();
-      const timeoutId = setTimeout(() => backendController.abort(), 1200);
+      const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
       const backendRes = await fetch("http://127.0.0.1:8000/api/tax/calculate", {
         method: "POST",

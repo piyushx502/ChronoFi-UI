@@ -73,10 +73,10 @@ export default function GoalChaserPage() {
         .then((res) => res.json())
         .then((data) => {
           if (data) {
-            if (data.base_salary) {
-              // Estimate 35% of monthly salary as savings capacity
-              const monthlySal = (data.base_salary * 1000) / 12; // base_salary is in thousands
-              setMonthlyCapacity(Math.round(monthlySal * 0.35).toString());
+            if (data.monthly_investable_surplus) {
+              setMonthlyCapacity(Math.round(data.monthly_investable_surplus).toString());
+            } else if (data.base_salary) {
+              setMonthlyCapacity(Math.round(data.base_salary * 0.35).toString());
             }
             if (data.assets && data.assets.length > 0) {
               const liquid = data.assets.find((a: { asset_type: string; current_value: number }) => a.asset_type === "Cash") || data.assets[0];

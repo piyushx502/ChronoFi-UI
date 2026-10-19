@@ -150,7 +150,10 @@ export function ModeIntelligenceProvider({ children }: { children: React.ReactNo
     let debtReason = "No active loans detected on your balance sheet.";
 
     if (totalDebt > 0) {
-      const highestRate = Math.max(...liabilities.map((l: any) => Number(l.interest_rate) || 0.09)) * 100;
+      const highestRate = Math.max(...liabilities.map((l: any) => {
+        const r = Number(l.interest_rate) || 0.09;
+        return (r > 1 ? r / 100 : r) * 100;
+      }));
       if (dti > 30) {
         debtScore = 94;
         debtUrgency = "critical";

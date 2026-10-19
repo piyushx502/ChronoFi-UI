@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: authHeader },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(300),
+          signal: AbortSignal.timeout(3000),
         });
         if (backendRes.ok) {
           return NextResponse.json(await backendRes.json());
