@@ -50,7 +50,7 @@ export default function TranscriptsAndDocumentsPage() {
     setIsLoadingDocs(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/documents/", {
+      const res = await fetch("/api/documents", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

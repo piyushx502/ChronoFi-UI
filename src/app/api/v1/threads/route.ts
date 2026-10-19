@@ -23,6 +23,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
   }
 
+  if (!authHeader.includes("demo-jwt-token")) {
+    try {
+      const backendController = new AbortController();
+      const timeoutId = setTimeout(() => backendController.abort(), 2000);
+      const res = await fetch("http://127.0.0.1:8000/api/v1/threads", {
+        headers: { Authorization: authHeader },
+        signal: backendController.signal,
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        return NextResponse.json(await res.json());
+      }
+    } catch {
+      // Backend offline; use fallback threads
+    }
+  }
+
   return NextResponse.json(mockThreads);
 }
 
