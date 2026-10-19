@@ -159,6 +159,60 @@ function buildScenarioData(profile: any, params: ReturnType<typeof extractScenar
   };
 }
 
+async function fetchGeminiAdvice(prompt: string): Promise<string | null> {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!apiKey) return null;
+
+  const candidateModels = [
+    process.env.GEMINI_MODEL,
+    "gemini-3.5-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
+  ].filter(Boolean) as string[];
+
+  for (const model of candidateModels) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.35,
+            maxOutputTokens: 1000,
+          },
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && typeof text === "string" && text.trim().length > 0) {
+          return text.trim();
+        }
+      }
+    } catch {
+      // Continue to next model candidate on failure
+    }
+  }
+
+  return null;
+}
+
 async function handleChatStream(req: NextRequest, message: string, threadId: string) {
   const authHeader = req.headers.get("authorization") || "";
 
@@ -192,7 +246,7 @@ async function handleChatStream(req: NextRequest, message: string, threadId: str
     }
   }
 
-  // 2. Intelligent Persona Engine
+  // 2. Intelligent Persona Engine & Live Gemini AI
   const profile = getProfileByAuth(authHeader);
   const lowerMsg = message.toLowerCase();
 
@@ -209,7 +263,38 @@ async function handleChatStream(req: NextRequest, message: string, threadId: str
     const params = extractScenarioParams(message, profile.monthly_investable_surplus);
     scenarioData = buildScenarioData(profile, params);
 
-    replyText = `I ran a 1,000-path Monte Carlo simulation for your vehicle query (₹${params.principal.toLocaleString('en-IN')} over ${params.years} years).
+    const prompt = `You are ChronoFi AI, a quantitative wealth advisor and scenario planning assistant.
+User Profile:
+- Name: ${profile.name}
+- Age: ${profile.age}
+- Net Worth: ₹${profile.net_worth.toLocaleString("en-IN")}
+- Annual Salary: ₹${(profile.base_salary * 12).toLocaleString("en-IN")}
+- Monthly Surplus: ₹${profile.monthly_investable_surplus.toLocaleString("en-IN")}
+- Emergency Runway: ${profile.months_of_runway} months
+- Risk Profile: ${profile.risk_tolerance}
+
+User Query: "${message}"
+
+Scenario Simulation (1,000-path Monte Carlo):
+- Asset / Vehicle Price: ₹${params.principal.toLocaleString("en-IN")}
+- Down Payment (20%): ₹${params.downPayment.toLocaleString("en-IN")}
+- Financed Principal: ₹${params.actualLoanPrincipal.toLocaleString("en-IN")}
+- Interest Rate: ${params.annualRate}% p.a.
+- Tenure: ${params.years} years (${params.tenureMonths} months)
+- Monthly EMI: ₹${params.emi.toLocaleString("en-IN")}
+- Total Interest: ₹${params.totalInterest.toLocaleString("en-IN")}
+- Baseline Corpus at Age 60: ₹${scenarioData.baseline.projected_corpus.toLocaleString("en-IN")} (Success Prob: ${scenarioData.baseline.goal_success_probability}%)
+- Modified Corpus at Age 61: ₹${scenarioData.modified.projected_corpus.toLocaleString("en-IN")} (Success Prob: ${scenarioData.modified.goal_success_probability}%)
+- Net Corpus Drag: ₹${Math.abs(scenarioData.impact.corpus_difference).toLocaleString("en-IN")}
+- Remaining Unallocated Monthly Surplus: ₹${Math.max(0, profile.monthly_investable_surplus - params.emi).toLocaleString("en-IN")}
+
+Provide a concise, quantitative, and professional 3-4 point financial analysis answering the user's question directly. Include EMI, down payment, retirement delay, and cash flow impact. Note that the Scenario Simulator tab has been dynamically updated with the interactive trajectory chart and down-payment alternatives.`;
+
+    const geminiAdvice = await fetchGeminiAdvice(prompt);
+    if (geminiAdvice) {
+      replyText = geminiAdvice;
+    } else {
+      replyText = `I ran a 1,000-path Monte Carlo simulation for your vehicle query (₹${params.principal.toLocaleString('en-IN')} over ${params.years} years).
   
 • Estimated EMI: ₹${params.emi.toLocaleString('en-IN')}/month at ${params.annualRate}% interest.
 • Down Payment (20%): ₹${params.downPayment.toLocaleString('en-IN')} upfront.
@@ -217,12 +302,33 @@ async function handleChatStream(req: NextRequest, message: string, threadId: str
 • Cashflow Status: Your monthly surplus is ₹${profile.monthly_investable_surplus.toLocaleString('en-IN')}, leaving ₹${Math.max(0, profile.monthly_investable_surplus - params.emi).toLocaleString('en-IN')} unallocated investable bandwidth.
 
 I have updated your Scenario Simulator tab with the complete trajectory curve and down-payment alternatives.`;
-  } else if (lowerMsg.includes("retire") || lowerMsg.includes("freedom") || lowerMsg.includes("corpus")) {
-    replyText = `Evaluating your current net worth of ₹${profile.net_worth.toLocaleString('en-IN')} with an expected 12% equity growth rate: With your current monthly SIP of ₹${profile.monthly_investable_surplus.toLocaleString('en-IN')}, your projected 30-year corpus reaches ₹${(profile.net_worth * 12).toLocaleString('en-IN')}, providing full financial independence by age ${profile.age + 25}.`;
-  } else if (lowerMsg.includes("tax") || lowerMsg.includes("regime")) {
-    replyText = `Under the Finance Act 2024 provisions, the New Tax Regime offers a standard deduction of ₹75,000 and Section 87A rebate up to ₹12 Lakhs. Your annual salary of ₹${(profile.base_salary * 12).toLocaleString('en-IN')} benefits from optimal equity LTCG harvesting under the ₹1.25L annual exemption threshold.`;
+    }
   } else {
-    replyText = `I have received your planning query: "${message}". Using your portfolio profile (${profile.name}, Age ${profile.age}, ${profile.risk_tolerance} risk tolerance), I verified that your runway (${profile.months_of_runway} months) and investable surplus (₹${profile.monthly_investable_surplus.toLocaleString('en-IN')}/mo) remain well-positioned. What specific scenario or goal would you like to model?`;
+    const prompt = `You are ChronoFi AI, an elite quantitative financial advisor and wealth planning assistant.
+User Profile:
+- Name: ${profile.name}
+- Age: ${profile.age}
+- Net Worth: ₹${profile.net_worth.toLocaleString("en-IN")}
+- Annual Salary: ₹${(profile.base_salary * 12).toLocaleString("en-IN")}
+- Monthly Investable Surplus: ₹${profile.monthly_investable_surplus.toLocaleString("en-IN")}
+- Monthly Expenses: ₹${profile.monthly_expenses.toLocaleString("en-IN")}
+- Runway: ${profile.months_of_runway} months
+- Risk Profile: ${profile.risk_tolerance}
+
+User Query: "${message}"
+
+Give a sharp, practical, quantitative financial advisory answer tailored to this profile. Use Indian financial conventions (₹, Lakhs, Crores, SIP compounding, New Tax Regime). Keep it structured, concise, and actionable in 2-4 short paragraphs or bullet points.`;
+
+    const geminiAdvice = await fetchGeminiAdvice(prompt);
+    if (geminiAdvice) {
+      replyText = geminiAdvice;
+    } else if (lowerMsg.includes("retire") || lowerMsg.includes("freedom") || lowerMsg.includes("corpus")) {
+      replyText = `Evaluating your current net worth of ₹${profile.net_worth.toLocaleString('en-IN')} with an expected 12% equity growth rate: With your current monthly SIP of ₹${profile.monthly_investable_surplus.toLocaleString('en-IN')}, your projected 30-year corpus reaches ₹${(profile.net_worth * 12).toLocaleString('en-IN')}, providing full financial independence by age ${profile.age + 25}.`;
+    } else if (lowerMsg.includes("tax") || lowerMsg.includes("regime")) {
+      replyText = `Under the Finance Act 2024 provisions, the New Tax Regime offers a standard deduction of ₹75,000 and Section 87A rebate up to ₹12 Lakhs. Your annual salary of ₹${(profile.base_salary * 12).toLocaleString('en-IN')} benefits from optimal equity LTCG harvesting under the ₹1.25L annual exemption threshold.`;
+    } else {
+      replyText = `I have received your planning query: "${message}". Using your portfolio profile (${profile.name}, Age ${profile.age}, ${profile.risk_tolerance} risk tolerance), I verified that your runway (${profile.months_of_runway} months) and investable surplus (₹${profile.monthly_investable_surplus.toLocaleString('en-IN')}/mo) remain well-positioned. What specific scenario or goal would you like to model?`;
+    }
   }
 
   const encoder = new TextEncoder();
