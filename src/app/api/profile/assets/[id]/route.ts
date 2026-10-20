@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteAssetByAuth } from "../../store";
 
@@ -17,7 +18,7 @@ export async function DELETE(
 
   if (!authHeader.includes("demo-jwt-token")) {
     try {
-      const backendRes = await fetch(`http://127.0.0.1:8000/api/profile/assets/${assetId}`, {
+      const backendRes = await fetch(`${BACKEND_URL}/api/profile/assets/${assetId}`, {
         method: "DELETE",
         headers: { Authorization: authHeader },
         signal: AbortSignal.timeout(3000),

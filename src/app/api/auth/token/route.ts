@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
       const backendController = new AbortController();
       const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
-      const backendRes = await fetch("http://127.0.0.1:8000/api/auth/token", {
+      const backendRes = await fetch(BACKEND_URL + "/api/auth/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: rawBody,

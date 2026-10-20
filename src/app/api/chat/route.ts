@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest } from "next/server";
 import { getProfileByAuth } from "../profile/store";
 
@@ -221,7 +222,7 @@ async function handleChatStream(req: NextRequest, message: string, threadId: str
     try {
       const backendController = new AbortController();
       const timeoutId = setTimeout(() => backendController.abort(), 2000);
-      const backendUrl = `http://127.0.0.1:8000/api/chat?message=${encodeURIComponent(message)}&thread_id=${encodeURIComponent(threadId)}`;
+      const backendUrl = `${BACKEND_URL}/api/chat?message=${encodeURIComponent(message)}&thread_id=${encodeURIComponent(threadId)}`;
       
       const backendRes = await fetch(backendUrl, {
         headers: {

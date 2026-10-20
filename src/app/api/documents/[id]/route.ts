@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(
@@ -19,7 +20,7 @@ export async function DELETE(
     try {
       const backendController = new AbortController();
       const timeoutId = setTimeout(() => backendController.abort(), 2000);
-      const res = await fetch(`http://127.0.0.1:8000/api/documents/${docId}`, {
+      const res = await fetch(`${BACKEND_URL}/api/documents/${docId}`, {
         method: "DELETE",
         headers: { Authorization: authHeader },
         signal: backendController.signal,

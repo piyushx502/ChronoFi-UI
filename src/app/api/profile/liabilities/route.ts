@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 import { addLiabilityByAuth } from "../store";
 
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     if (!authHeader.includes("demo-jwt-token")) {
       try {
-        const backendRes = await fetch("http://127.0.0.1:8000/api/profile/liabilities", {
+        const backendRes = await fetch(BACKEND_URL + "/api/profile/liabilities", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: authHeader },
           body: JSON.stringify(body),

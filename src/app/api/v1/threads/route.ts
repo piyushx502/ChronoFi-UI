@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 
 const mockThreads = [
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
     try {
       const backendController = new AbortController();
       const timeoutId = setTimeout(() => backendController.abort(), 2000);
-      const res = await fetch("http://127.0.0.1:8000/api/v1/threads", {
+      const res = await fetch(BACKEND_URL + "/api/v1/threads", {
         headers: { Authorization: authHeader },
         signal: backendController.signal,
       });

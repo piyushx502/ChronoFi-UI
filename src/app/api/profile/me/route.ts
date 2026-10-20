@@ -1,3 +1,4 @@
+import { BACKEND_URL } from "@/lib/api-config";
 import { NextRequest, NextResponse } from "next/server";
 import { getProfileByAuth, updateProfileByAuth } from "../store";
 
@@ -14,7 +15,7 @@ export async function GET(req: NextRequest) {
       const backendController = new AbortController();
       const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
-      const backendRes = await fetch("http://127.0.0.1:8000/api/profile/me", {
+      const backendRes = await fetch(BACKEND_URL + "/api/profile/me", {
         headers: { Authorization: authHeader },
         signal: backendController.signal,
       });
@@ -50,7 +51,7 @@ export async function PUT(req: NextRequest) {
         const backendController = new AbortController();
         const timeoutId = setTimeout(() => backendController.abort(), 3000);
 
-        const backendRes = await fetch("http://127.0.0.1:8000/api/profile/me", {
+        const backendRes = await fetch(BACKEND_URL + "/api/profile/me", {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
