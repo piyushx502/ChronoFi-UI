@@ -123,22 +123,47 @@ const defaultPriya: ProfileData = calculateProfileMetrics({
   ],
 });
 
-// In-memory store for demo session
+const defaultAdmin: ProfileData = calculateProfileMetrics({
+  id: 3,
+  name: "Administrator",
+  email: "admin@chronofi.com",
+  age: 35,
+  date_of_birth: "1990-01-01",
+  occupation: "System Administrator",
+  risk_tolerance: "Moderate",
+  currency: "INR",
+  base_salary: 250000.0,
+  monthly_expenses: 60000.0,
+  assets: [
+    { id: 10, name: "Reserve Liquidity", asset_type: "Cash", current_value: 1000000.0, expected_return_rate: 0.05, currency: "INR" },
+    { id: 11, name: "Diversified Index Portfolio", asset_type: "Equity", current_value: 5000000.0, expected_return_rate: 0.12, currency: "INR" },
+  ],
+  liabilities: [],
+  goals: [
+    { id: 10, name: "Capital Independence", target_amount: 50000000.0, target_years: 15, priority: "Essential", inflation_rate: 0.06, currency: "INR" },
+  ],
+});
+
+// In-memory store for active session
 const profileStore: { [id: number]: ProfileData } = {
   1: { ...defaultArjun },
   2: { ...defaultPriya },
+  3: { ...defaultAdmin },
 };
 
 export function getProfileByAuth(authHeader: string): ProfileData {
-  const isPriya = authHeader.toLowerCase().includes("priya");
+  const lower = authHeader.toLowerCase();
+  if (lower.includes("admin")) return profileStore[3] || defaultAdmin;
+  const isPriya = lower.includes("priya");
   const id = isPriya ? 2 : 1;
   return profileStore[id] || (isPriya ? defaultPriya : defaultArjun);
 }
 
 export function updateProfileByAuth(authHeader: string, updates: Partial<ProfileData>): ProfileData {
-  const isPriya = authHeader.toLowerCase().includes("priya");
-  const id = isPriya ? 2 : 1;
-  const current = profileStore[id] || (isPriya ? { ...defaultPriya } : { ...defaultArjun });
+  const lower = authHeader.toLowerCase();
+  const id = lower.includes("admin") ? 3 : (lower.includes("priya") ? 2 : 1);
+  const fallback = id === 3 ? defaultAdmin : (id === 2 ? defaultPriya : defaultArjun);
+  const current = profileStore[id] || { ...fallback };
 
   const updatedRaw = {
     ...current,

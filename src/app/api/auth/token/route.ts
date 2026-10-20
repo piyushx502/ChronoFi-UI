@@ -8,8 +8,19 @@ export async function POST(req: NextRequest) {
     const username = params.get("username")?.trim().toLowerCase() || "";
     const password = params.get("password") || "";
 
-    // 1. Instant Demo Persona Authentication (Zero-latency login for Arjun & Priya)
-    const normalizedEmail = username.includes("@") ? username : `${username}@chronofi.demo`;
+    // 1. Instant Persona Authentication (Admin, Arjun, Priya)
+    const normalizedEmail = username.includes("@") ? username : (username === "admin" ? "admin@chronofi.com" : `${username}@chronofi.demo`);
+
+    if (
+      (normalizedEmail === "admin@chronofi.com" || username === "admin") &&
+      (password === "Admin@ChronoFi2026!" || password === "admin123" || password === "password123")
+    ) {
+      return NextResponse.json({
+        access_token: "admin-jwt-token-" + Date.now(),
+        token_type: "bearer",
+        user_id: 3,
+      });
+    }
 
     if (
       (normalizedEmail === "arjun@chronofi.demo" || username === "arjun") &&
